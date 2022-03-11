@@ -12,8 +12,7 @@ You will be implementing your own AI in the `bean` directory!
 Requirements
 ---------------------
 * Python 3
-* The `termcolor` Python module (install command: `pip install termcolor`)
-* The `blessings` Python module (install command: `pip install blessings`)
+* `pip install - requirement.txt` to install all needed requirements.
 
 Run a new game
 ---------------------

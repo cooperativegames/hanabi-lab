@@ -2,8 +2,6 @@ import sys
 
 from game.game import Game
 
-# TODO: aggiungere opzione -h (help)
-
 if __name__ == "__main__":
     # default values
     ai = "alphahanabi"

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from msilib.schema import SelfReg
 import sys
 import itertools
 import copy
@@ -11,7 +10,7 @@ from ...action import Action, PlayAction, DiscardAction, HintAction
 from ...card import Card, get_appearance
 from ...deck import DECKS
 from ...base_strategy import BaseStrategy
-from .hints_manager import ValueHintsManager, PlayabilityHintsManager, CardHintsManager
+from .hints_manager import ValueHintsManager
 
 
 
