@@ -2,12 +2,11 @@
 # -*- coding: utf-8 -*-
 
 
-import multiprocessing
+import multiprocessing_on_dill as multiprocessing
 import sys
 
 from game.game import Game
 from game.deck import DECK50, DECK55
-
 
 if __name__ == "__main__":
     # default values
