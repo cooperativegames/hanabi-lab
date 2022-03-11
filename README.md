@@ -1,4 +1,4 @@
-Hanabi
+Hanabi Lab
 =====================
 
 Welcome to the Hanabi lab! This repo is (mostly) based on [this wonderful Hanabi repo](https://github.com/giove91/hanabi).
