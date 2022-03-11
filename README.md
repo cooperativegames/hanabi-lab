@@ -1,40 +1,14 @@
 Hanabi
 =====================
 
-This is a program that plays [Hanabi](https://boardgamegeek.com/boardgame/98778/hanabi).
+Welcome to the Hanabi lab! This repo is (mostly) based on [this wonderful Hanabi repo](https://github.com/giove91/hanabi): 
 
 The main AI is contained in the directory `alphahanabi`. It is optimized for 5-player games, but it also plays well 4-player games.
 A sample (stupid) AI is provided in the directory `dummy`.
-An additional stronger AI is contained in the directory `deltahanabi`.
-
-
-Performance
----------------------
-
-Here are the average scores and win rates for the standard 50-card deck (5 colors) and for the "black" 55-card variant (6 colors, where the 6th color has 1 copy of each card).
-
-**Average scores**
-
- AI                    | standard 4 players | standard 5 players | black 4 players | black 5 players |
------------------------|--------------------|--------------------|-----------------|-----------------|
-alphahanabi (moderate) | 22.40              | 23.25              | 24.87           | 26.56           |
-alphahanabi (hard)     | -                  | 24.26              | -               | 27.67           |
-alphahanabi (hardest)  | **24.67**          | 24.75              | **28.47**       | 28.82           |
-deltahanabi            | 24.57              | **24.95**          | 28.36           | **29.39**       |
-
-**Win rates**
-
- AI                    | standard 4 players | standard 5 players | black 4 players | black 5 players |
------------------------|--------------------|--------------------|-----------------|-----------------|
-alphahanabi (moderate) | 6.3 %              | 12.4 %             | 0.2 %           | 1.2 %           |
-alphahanabi (hard)     | -                  | 54.4 %             | -               | 16.2 %          |
-alphahanabi (hardest)  | **76.4 %**         | 80.5 %             | 32.0 %          | 40.7 %          |
-deltahanabi            | 72.9 %             | **95.9 %**         | **38.2 %**      | **65.7 %**      |
-
 
 Requirements
 ---------------------
-* Python 2.7
+* Python 3
 * The `termcolor` Python module (install command: `pip install termcolor`)
 * The `blessings` Python module (install command: `pip install blessings`)
 
