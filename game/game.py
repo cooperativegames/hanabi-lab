@@ -164,7 +164,8 @@ class Game:
             
             # remove card from hand
             self.discard_pile.append(card)
-            player.hand[action.card_pos] = self.draw_card_from_deck(player)
+            player.hand.pop(action.card_pos)
+            player.hand.insert(0, self.draw_card_from_deck(player))
         
         elif action.type == Action.DISCARD:
             card = player.hand[action.card_pos]
@@ -175,7 +176,8 @@ class Game:
             
             # remove card from hand
             self.discard_pile.append(card)
-            player.hand[action.card_pos] = self.draw_card_from_deck(player)
+            player.hand.pop(action.card_pos)
+            player.hand.insert(0, self.draw_card_from_deck(player))
         
         elif action.type == Action.HINT:
             # decrement hints

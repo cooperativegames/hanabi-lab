@@ -186,8 +186,10 @@ class Strategy(BaseStrategy):
         return [i for i in range(self.num_players) if i != self.id]
     
     
+     # Update knowledge 
     def reset_knowledge(self, player_id, card_pos, new_card_exists):
-        self.knowledge[player_id][card_pos] = Knowledge(False, False)
+        self.knowledge[player_id].pop(card_pos)
+        self.knowledge[player_id].insert(0, Knowledge(False, False))
     
     
     def print_knowledge(self):
@@ -206,12 +208,13 @@ class Strategy(BaseStrategy):
         """
         if action.type in [Action.PLAY, Action.DISCARD]:
             # reset knowledge of the player
-            new_card = self.my_hand[action.card_pos] if player_id == self.id else self.hands[player_id][action.card_pos]
+            new_card = self.my_hand[0] if player_id == self.id else self.hands[player_id][0]
             self.reset_knowledge(player_id, action.card_pos, new_card is not None)
             
             if player_id == self.id:
                 # check for my new card
-                self.possibilities[action.card_pos] = Counter(self.full_deck) if self.my_hand[action.card_pos] is not None else Counter()
+                self.possibilities.pop(action.card_pos)
+                self.possibilities.insert(0, Counter(self.full_deck) if self.my_hand[0] is not None else Counter())
         
         elif action.type == Action.HINT:
             # someone gave a hint!
