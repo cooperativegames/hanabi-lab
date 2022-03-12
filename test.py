@@ -10,11 +10,11 @@ from game.deck import DECK50, DECK55
 
 if __name__ == "__main__":
     # default values
-    ai = "alphahanabi"
+    ai = "dummy"
     ai_params = {}
-    num_players = 5
-    num_simulations = 1000
-    deck_type = DECK55
+    num_players = 4
+    num_simulations = 10
+    deck_type = DECK50
 
 
     if '-a' in sys.argv[1:]:

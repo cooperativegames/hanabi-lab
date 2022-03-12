@@ -3,7 +3,7 @@ Hanabi Lab
 
 Welcome to the Hanabi lab! This repo is (mostly) based on [this wonderful Hanabi repo](https://github.com/giove91/hanabi).
 
-A sample (stupid) AI is provided in the directory `dummy`.
+A sample dummy AI is provided in the directory `dummy`.
 
 The smarter AI is contained in the directory `alphahanabi`. It is optimized for 5-player games, but it also plays well 4-player games.
 
@@ -12,7 +12,7 @@ You will be implementing your own AI in the `bean` directory!
 Requirements
 ---------------------
 * Python 3
-* `pip install - requirement.txt` to install all needed requirements.
+* `pip install -r requirement.txt` to install all needed requirements.
 
 Run a new game
 ---------------------
