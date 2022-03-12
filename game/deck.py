@@ -4,7 +4,7 @@
 from .card import Card
 
 
-def standard_deck(include_rainbow=True):
+def standard_deck(include_rainbow: bool=True) -> list[Card]:
     deck = []
     id = 0
     for color in Card.COLORS:
@@ -35,7 +35,7 @@ def standard_deck(include_rainbow=True):
     return deck
 
 
-def standard_deck_25():
+def standard_deck_25() -> list[Card]:
     return standard_deck(include_rainbow=False)
 
 

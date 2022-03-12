@@ -15,11 +15,11 @@ class Strategy(BaseStrategy):
     It only has the knowledge of that player, and it must make decisions.
     """
     
-    def feed_turn(self, player_id, action):
-        pass
+    def feed_turn(self, player_id: int, action: Action) -> None:
+        return None
     
     
-    def get_turn_action(self):
+    def get_turn_action(self) -> Action:
         
         if self.hints > 0 and random.randint(0,2) == 0:
             # give random hint to the next player

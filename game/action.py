@@ -17,7 +17,7 @@ class Action(object):
     HINT_TYPES = [COLOR, NUMBER]
     
     
-    def __init__(self, type, card_pos=None, player_id=None, color=None, number=None):
+    def __init__(self, type, card_pos: int = None, player_id: int = None, color=None, number=None):
         raise NotImplementedError
     
     def apply(self, game):

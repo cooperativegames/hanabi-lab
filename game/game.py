@@ -24,10 +24,11 @@ class Game:
     INITIAL_LIVES = 3
     
     
-    def __init__(self, num_players, ai="alphahanabi", ai_params={}, strategy_log=False, dump_deck_to=None, load_deck_from=None, deck_description=None, deck_type=DECK55):
-        self.num_players = num_players
-        self.ai = ai
-        self.ai_params = ai_params
+    def __init__(self, num_players: int, ai: str = "alphahanabi", ai_params={}, strategy_log: bool = False, 
+                       dump_deck_to=None, load_deck_from=None, deck_description=None, deck_type: str = DECK50):
+        self.num_players: int = num_players
+        self.ai: str = ai
+        self.ai_params: dict = ai_params
         
         self.strategy_log = strategy_log    # log messages from strategy to standard output
         self.dump_deck_to = dump_deck_to    # if not None, dump the initial deck to the given file

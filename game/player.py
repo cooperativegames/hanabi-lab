@@ -15,19 +15,19 @@ class Player:
     In particular, it has to take care of hiding information not known to the player.
     """
     
-    def __init__(self, id, game, hand, ai, ai_params, strategy_log=False):
+    def __init__(self, id: int, game: 'Game', hand: list[Card], ai: str, ai_params: dict, strategy_log: bool = False):
         # my id (order of play)
-        self.id = id
+        self.id: int = id
         
         # game
-        self.game = game
+        self.game: 'Game' = game
         
         # initial hand of cards
-        self.hand = hand
+        self.hand: list[Card] = hand
         
-        # AI to be used, with parameters
-        self.ai = ai
-        self.ai_params = ai_params
+        # AI to be used, with parsameters
+        self.ai: str = ai
+        self.ai_params: dict = ai_params
         
         # create strategy object
         Strategy = __import__('ai.%s.strategy' % self.ai, globals(), locals(), fromlist=['Strategy'], level=1).Strategy
