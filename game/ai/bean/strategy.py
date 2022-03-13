@@ -1,44 +1,44 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from ast import Pass
 import sys
 import itertools
 import copy
 from collections import Counter
 
-from ...action import Action, PlayAction, DiscardAction, HintAction
+from ...action import Action, PlayAction, DiscardAction, ClueAction
 from ...card import Card, get_appearance
 from ...deck import DECKS
 from ...base_strategy import BaseStrategy
-from .hints_manager import ValueHintsManager
+from .clues_manager import CluesManager
 
 
 
 
 class Knowledge:
     """
-    An instance of this class represents what a player knows about a card, as known by everyone.
+    An instance of this class represents 
+    - What a player knows about a card, as known by everyone in self.color and self.number
     """
     
     def __init__(self, color=False, number=False):
-        self.color = color                  # know the color
-        self.number = number                # know the number
+        self.color = color                  # know exact color
+        self.number = number                # know exact number
         self.playable = False               # at some point, this card was playable
         self.non_playable = False           # at some point, this card was not playable
-        self.useless = False                # this card is useless
-        self.high = False                   # at some point, this card was high (see CardHintsManager)
-    
+        self.useless = False                # this card is useless    
     
     def __repr__(self):
         return ("C" if self.color else "-") + ("N" if self.number else "-") + ("P" if self.playable else "-") + ("Q" if self.non_playable else "-") + ("L" if self.useless else "-") + ("H" if self.high else "-")
     
     
-    def knows(self, hint_type):
+    def knows(self, clue_type):
         """
         Does the player know the color/number?
         """
-        assert hint_type in Action.HINT_TYPES
-        if hint_type == Action.COLOR:
+        assert clue_type in Action.CLUE_TYPES
+        if clue_type == Action.COLOR:
             return self.color
         else:
             return self.number
@@ -92,7 +92,7 @@ class Strategy(BaseStrategy):
         # deck size
         self.deck_size = deck_size
         
-        # for each of my card, store its possibilities
+        # for each of my card, store its possibilities using both implicit and explicit information
         self.possibilities = [Counter(self.full_deck) for i in range(self.k)]
         
         # remove cards of other players from possibilities
@@ -101,8 +101,7 @@ class Strategy(BaseStrategy):
         # knowledge of all players
         self.knowledge = [[Knowledge(color=False, number=False) for j in range(k)] for i in range(num_players)]
         
-        # hints scheduler
-        self.hints_manager = ValueHintsManager(self)
+        self.clues_manager = CluesManager(self)
     
     
     def visible_cards(self):
@@ -182,12 +181,36 @@ class Strategy(BaseStrategy):
     def next_player_id(self):
         return (self.id + 1) % self.num_players
     
+
     def other_players_id(self):
         return [i for i in range(self.num_players) if i != self.id]
     
-    
-     # Update knowledge 
-    def reset_knowledge(self, player_id, card_pos, new_card_exists):
+
+    def finesse_index(self, player_id) -> int:
+        """
+        Returns the index of the leftmost unclued(finesse) card of the given player.
+        """
+
+        "*** BEGIN SOLUTION ***"
+        for i, kn in enumerate(self.knowledge[player_id]):
+            if not (kn.knows(Action.COLOR) or kn.knows(Action.NUMBER)):
+                return i
+        "*** END SOLUTION ***"
+
+
+    def chop_index(self, player_id) -> int:
+        """
+        Returns the index of the rightmost unclued(chop) card of the given player.
+        """
+
+        "*** BEGIN SOLUTION ***"
+        for i, kn in enumerate(self.knowledge[player_id][::-1]):
+            if not (kn.knows(Action.COLOR) or kn.knows(Action.NUMBER)):
+                return (self.k - 1) - i
+        "*** END SOLUTION ***"
+
+
+    def update_knowledge(self, player_id, card_pos, new_card_exists):
         self.knowledge[player_id].pop(card_pos)
         self.knowledge[player_id].insert(0, Knowledge(False, False))
     
@@ -202,25 +225,23 @@ class Strategy(BaseStrategy):
         print()
 
     
-    def feed_turn(self, player_id, action):
+    def feed_turn(self, player_id: int, action: Action):
         """
         Receive information about a played turn.
         """
         if action.type in [Action.PLAY, Action.DISCARD]:
             # reset knowledge of the player
             new_card = self.my_hand[0] if player_id == self.id else self.hands[player_id][0]
-            self.reset_knowledge(player_id, action.card_pos, new_card is not None)
+            self.update_knowledge(player_id, action.card_pos, new_card is not None)
             
             if player_id == self.id:
                 # check for my new card
                 self.possibilities.pop(action.card_pos)
                 self.possibilities.insert(0, Counter(self.full_deck) if self.my_hand[0] is not None else Counter())
         
-        elif action.type == Action.HINT:
-            # someone gave a hint!
-            # the suitable hints manager must process it
-            hints_manager = self.hints_scheduler.select_hints_manager(player_id, action.turn)
-            hints_manager.receive_hint(player_id, action)
+        elif action.type == Action.CLUE:
+            # someone gave a clue!
+            self.process_clue(player_id, action)
         
         # update possibilities with visible cards
         self.update_possibilities()
@@ -230,7 +251,43 @@ class Strategy(BaseStrategy):
             self.print_knowledge()
 
     
-    
+    def process_clue(self, player_id: int, action: ClueAction):
+        """
+        Process clue given by player_id
+        - Update Knowledge and self.possiblities based on direct clue.
+        - Identify what type(s) of clues it is (play or save) based on convention.
+            - For every type that it is identified to be, 
+            - 	Update self.possibilities using convention based information
+        """
+        # Clue is for me
+        if action.player_id == self.id:
+            # process direct clue
+            for (i, p) in enumerate(self.possibilities):
+                for card in self.strategy.full_deck_composition:
+                    if not card.matches_clue(action, i) and card in p:
+                        # self.log("removing card %r from position %d due to clue" % (card, i))
+                        # p.remove(card)
+                        del p[card]
+        
+        # update knowledge
+        for card_pos in action.cards_pos:
+            kn = self.knowledge[action.player_id][card_pos]
+            if action.clue_type == Action.COLOR:
+                kn.color = True
+            else:
+                kn.number = True
+        
+        chop_index = self.chop_index(self.id)
+        if len(action.card_pos) == 1:
+            # If it is a 2 or 5 clue that touches chop, it is a discard clue. Otherwise, it is a play clue.
+            if chop_index == action.cards_pos[0] and action.clue_type == ClueAction.NUMBER and action.number == 5 or action.number == 2:
+                # It's a discard clue
+                pass
+        else:
+            pass
+        
+        
+
     def get_best_discard(self):
         """
         Choose the best card to be discarded.

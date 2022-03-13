@@ -4,7 +4,7 @@
 import sys
 import random
 
-from ...action import Action, PlayAction, DiscardAction, HintAction
+from ...action import Action, PlayAction, DiscardAction, ClueAction
 from ...card import Card
 from ...base_strategy import BaseStrategy
 
@@ -21,8 +21,8 @@ class Strategy(BaseStrategy):
     
     def get_turn_action(self) -> Action:
         
-        if self.hints > 0 and random.randint(0,2) == 0:
-            # give random hint to the next player
+        if self.clues > 0 and random.randint(0,2) == 0:
+            # give random clue to the next player
             player_id = (self.id + 1) % self.num_players
             card = random.choice([card for card in self.hands[player_id] if card is not None])
             
@@ -33,8 +33,8 @@ class Strategy(BaseStrategy):
                 color = None
                 number = card.number
             
-            self.log("give some random hint")
-            return HintAction(player_id, color=color, number=number)
+            self.log("give some random clue")
+            return ClueAction(player_id, color=color, number=number)
         
         elif random.randint(0,1) == 0:
             # play random card

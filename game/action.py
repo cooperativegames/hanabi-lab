@@ -8,13 +8,13 @@ class Action(object):
     """
     PLAY = 'Play'
     DISCARD = 'Discard'
-    HINT = 'Hint'
+    CLUE = 'Clue'
     
     COLOR = 'C'
     NUMBER = 'N'
     
-    TYPES = [PLAY, DISCARD, HINT]
-    HINT_TYPES = [COLOR, NUMBER]
+    TYPES = [PLAY, DISCARD, CLUE]
+    CLUE_TYPES = [COLOR, NUMBER]
     
     
     def __init__(self, type, card_pos: int = None, player_id: int = None, color=None, number=None):
@@ -23,7 +23,6 @@ class Action(object):
     def apply(self, game):
         # populate other fields, using information from the game
         self.turn = game.get_current_turn()
-
 
 
 class PlayAction(Action):
@@ -50,30 +49,30 @@ class DiscardAction(Action):
         return "Discard card %d" % self.card_pos
 
 
-class HintAction(Action):
+class ClueAction(Action):
     """
-    Action of type HINT.
+    Action of type CLUE.
     """
-    def __init__(self, player_id, color=None, number=None, hint_type=None, value=None):
+    def __init__(self, target_id, color=None, number=None, clue_type=None, value=None):
         """
-        A HintAction can be constructed giving the color or the number, or giving the hint type and the value.
+        A ClueAction can be constructed giving the color or the number, or giving the clue type and the value.
         """
-        self.type = self.HINT
-        self.player_id = player_id
+        self.type = self.CLUE
+        self.target_id = target_id
         
         if color is not None or number is not None:
             assert color is not None and number is None or color is None and number is not None
-            assert hint_type is None and value is None
+            assert clue_type is None and value is None
             self.color = color
             self.number = number
             self.value = color if color is not None else number
-            self.hint_type = self.COLOR if color is not None else self.NUMBER
+            self.clue_type = self.COLOR if color is not None else self.NUMBER
         else:
-            assert hint_type is not None and value is not None
-            assert hint_type in self.HINT_TYPES
-            self.hint_type = hint_type
+            assert clue_type is not None and value is not None
+            assert clue_type in self.CLUE_TYPES
+            self.clue_type = clue_type
             self.value = value
-            if hint_type == Action.COLOR:
+            if clue_type == Action.COLOR:
                 self.color = value
                 self.number = None
             else:
@@ -82,13 +81,13 @@ class HintAction(Action):
     
     
     def __repr__(self):
-        return "Hint to player %d about %r" % (self.player_id, self.value)
+        return "Clue to player %d about %r" % (self.player_id, self.value)
     
     def apply(self, game):
         # populate other fields, using information from the game
-        super(HintAction, self).apply(game)
+        super(ClueAction, self).apply(game)
         
-        player = game.players[self.player_id]
+        player = game.players[self.target_id]
         self.cards_pos = [i for (i, card) in enumerate(player.hand) if card is not None and (card.number == self.number or card.color == self.color)]
         assert len(self.cards_pos) > 0
 

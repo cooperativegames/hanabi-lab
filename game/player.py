@@ -73,7 +73,7 @@ class Player:
         To be called immediately after every turn.
         """
         self.strategy.update(
-                hints = self.game.hints,
+                clues = self.game.clues,
                 lives = self.game.lives,
                 my_hand = get_appearance(self.hand, hide=True),
                 hands = {i: get_appearance(player.hand) for (i, player) in self.other_players().items()},

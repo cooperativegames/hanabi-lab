@@ -4,7 +4,7 @@ from game.game import Game
 
 if __name__ == "__main__":
     # default values
-    ai = "alphahanabi"
+    ai = "dummy"
     ai_params = {}
     wait_key = True
     num_players = 5

@@ -6,7 +6,7 @@ import multiprocessing_on_dill as multiprocessing
 import sys
 
 from game.game import Game
-from game.deck import DECK50, DECK55
+from game.deck import DECK50
 
 if __name__ == "__main__":
     # default values
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         # choose deck type
         i = sys.argv.index('-d')
         assert len(sys.argv) >= i+2
-        assert sys.argv[i+1] in ['standard', 'black']
+        assert sys.argv[i+1] in ['standard']
         if sys.argv[i+1] == 'standard':
             deck_type = DECK50
 
@@ -81,7 +81,7 @@ if __name__ == "__main__":
     print("Average result:", float(sum(scores)) / len(scores))
     print("Best result:", max(scores))
     print("Worst result:", min(scores))
-    print("Rate of perfect scores: %.2f %%" % (float(scores.count(30 if deck_type == DECK55 else 25)) / len(scores) * 100.0))
+    print("Rate of perfect scores: %.2f %%" % (float(scores.count(25)) / len(scores) * 100.0))
 
     lives = [statistics.lives for statistics in results]
     print("Average number of remaining lives:", float(sum(lives)) / len(lives))

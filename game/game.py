@@ -9,18 +9,18 @@ import copy
 from .card import Card
 from .player import Player
 from .action import Action
-from .deck import DECKS, DECK55, DECK50
+from .deck import DECKS, DECK50
 
 
 Turn = namedtuple("Turn", "player action number")
-Statistics = namedtuple("Statistics", "score lives hints num_turns")
-Status = namedtuple("Status", "deck hands score lives hints previous_turn is_last_round last_turn board")
+Statistics = namedtuple("Statistics", "score lives clues num_turns")
+Status = namedtuple("Status", "deck hands score lives clues previous_turn is_last_round last_turn board")
 
 class Game:
     NUM_PLAYERS_CHOICES = [2, 3, 4, 5]
     CARDS_PER_PLAYER = {2: 5, 3: 5, 4: 4, 5: 4}
-    INITIAL_HINTS = 8
-    MAX_HINTS = 8
+    INITIAL_CLUES = 8
+    MAX_CLUES = 8
     INITIAL_LIVES = 3
     
     
@@ -73,8 +73,8 @@ class Game:
                 strategy_log = self.strategy_log
             ) for i in range(self.num_players)]
         
-        # set number of hints and lives
-        self.hints = self.INITIAL_HINTS
+        # set number of clues and lives
+        self.clues = self.INITIAL_CLUES
         self.lives = self.INITIAL_LIVES
         
         # turn log
@@ -109,7 +109,7 @@ class Game:
             hands = [copy.copy(player.hand) for player in self.players],
             score = self.get_current_score(),
             lives = self.lives,
-            hints = self.hints,
+            clues = self.clues,
             previous_turn = self.this_turn,
             is_last_round = self.last_round,
             last_turn = self.last_turn,
@@ -130,14 +130,14 @@ class Game:
             return None
     
     
-    def increment_hints(self):
-        self.hints += 1
-        self.hints = min(self.hints, self.MAX_HINTS)
+    def increment_clues(self):
+        self.clues += 1
+        self.clues = min(self.clues, self.MAX_CLUES)
     
-    def decrement_hints(self):
-        if self.hints == 0:
-            raise Exception("No hints available")
-        self.hints -= 1
+    def decrement_clues(self):
+        if self.clues == 0:
+            raise Exception("No clues available")
+        self.clues -= 1
     
     def decrement_lives(self):
         self.lives -= 1
@@ -156,8 +156,8 @@ class Game:
                 self.board[card.color] += 1
                 
                 if card.number == 5:
-                    # increment hints!
-                    self.increment_hints()
+                    # increment clues!
+                    self.increment_clues()
             else:
                 # play is not successful
                 end_game = self.decrement_lives() or end_game
@@ -171,22 +171,22 @@ class Game:
             card = player.hand[action.card_pos]
             assert card is not None
             
-            # increment hints
-            self.increment_hints()
+            # increment clues
+            self.increment_clues()
             
             # remove card from hand
             self.discard_pile.append(card)
             player.hand.pop(action.card_pos)
             player.hand.insert(0, self.draw_card_from_deck(player))
         
-        elif action.type == Action.HINT:
-            # decrement hints
-            self.decrement_hints()
+        elif action.type == Action.CLUE:
+            # decrement clues
+            self.decrement_clues()
             
             # check for correctness
-            target = self.players[action.player_id]
+            target = self.players[action.target_id]
             assert player != target
-            if action.hint_type == Action.COLOR:
+            if action.clue_type == Action.COLOR:
                 assert any(card is not None and card.color == action.color for card in target.hand)
             else:
                 assert any(card is not None and card.number == action.number for card in target.hand)
@@ -205,7 +205,7 @@ class Game:
             print(action.type, self.discard_pile[-1], "(card %d)," % action.card_pos, end=' ')
             print("draw %r" % player.hand[action.card_pos])
         
-        elif action.type == Action.HINT:
+        elif action.type == Action.CLUE:
             print(action.type, end=' ')
             print("to player %d," % action.player_id, end=' ')
             print("cards", action.cards_pos, end=' ')
@@ -228,7 +228,7 @@ class Game:
         for color in Card.COLORS:
             print(colored("%d" % self.board[color], Card.PRINTABLE_COLORS[color]), end=' ')
         print()
-        print("Hints: %d    Lives: %d    Deck: %d    Score: %d" % (self.hints, self.lives, len(self.deck), self.get_current_score()))
+        print("Clues: %d    Lives: %d    Deck: %d    Score: %d" % (self.clues, self.lives, len(self.deck), self.get_current_score()))
         
         if self.last_round:
             print("This is the last round (player %d plays last on turn %d)" % (self.last_player.id, self.last_turn))
@@ -238,7 +238,7 @@ class Game:
         print()
     
     def log_status_short(self):
-        print("Hints: %d    Lives: %d    Deck: %d    Score: %d" % (self.hints, self.lives, len(self.deck), self.get_current_score()))
+        print("Clues: %d    Lives: %d    Deck: %d    Score: %d" % (self.clues, self.lives, len(self.deck), self.get_current_score()))
     
 
     def log_deck(self):
@@ -317,7 +317,7 @@ class Game:
         self.statistics = Statistics(
             score = self.get_current_score(),
             lives = self.lives,
-            hints = self.hints,
+            clues = self.clues,
             num_turns = len(self.turns)
         )
         

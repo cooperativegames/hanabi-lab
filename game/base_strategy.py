@@ -31,12 +31,12 @@ class BaseStrategy(object):
         self.deck_size: int = deck_size
     
     
-    def update(self, hints: int, lives: int, my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
+    def update(self, clues: int, lives: int, my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
                      discard_pile: list[Card], turn: int, last_turn: bool, deck_size: int) -> None:
         """
         To be called immediately after every turn.
         """
-        self.hints: int = hints
+        self.clues: int = clues
         self.lives: int = lives
         self.turn: int = turn
         self.last_turn: bool = last_turn

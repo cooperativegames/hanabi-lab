@@ -15,26 +15,25 @@ class CardAppearance:
     It only has color and number, but not the id.
     """
     RED = 'Red'
-    BLUE = 'Blue'
-    WHITE = 'White'
     YELLOW = 'Yellow'
     GREEN = 'Green'
-    RAINBOW = 'Rainbow'
+    BLUE = 'Blue'
+    PURPLE = 'Purple'
+ 
     
-    NUM_COLORS = 6
+    NUM_COLORS = 5
     NUM_NUMBERS = 5
     
-    COLORS = [RED, BLUE, WHITE, YELLOW, GREEN, RAINBOW]
+    COLORS = [RED, YELLOW, GREEN, BLUE, PURPLE]
     
     COLORS_TO_NUMBERS = {color: i for (i, color) in enumerate(COLORS)}
     
     PRINTABLE_COLORS = {
         RED: 'red',
         BLUE: 'blue',
-        WHITE: 'grey',
+        PURPLE: 'magenta',
         YELLOW: 'yellow',
         GREEN: 'green',
-        RAINBOW: 'magenta'
     }
     
     
@@ -82,9 +81,9 @@ class CardAppearance:
         return True
     
     
-    def matches_hint(self, action, card_pos):
-        # does this card (in the given position) match the given hint?
-        assert action.type == Action.HINT
+    def matches_clue(self, action, card_pos):
+        # does this card (in the given position) match the given clue?
+        assert action.type == Action.CLUE
         matches = self.matches(action.color, action.number)
         return card_pos in action.cards_pos and matches or card_pos not in action.cards_pos and not matches
     
@@ -137,7 +136,7 @@ class CardAppearance:
         return self.number > board[self.color]
     
     
-    def relevant(self, board, full_deck, discard_pile):
+    def critical(self, board, full_deck, discard_pile):
         """
         Is this card the last copy available?
         full_deck and discard_pile can be given either as lists or as Counters (more efficient).
