@@ -192,6 +192,7 @@ def get_appearance(cards: list[Card], hide: bool = False) -> list[CardAppearance
     Given a list of (possibly None) Card objects, return the list of CardAppearance objects.
     If hide=True, then hide the card and put 0 instead (this is used by Player to hide cards).
     """
+    hide = False
     if hide:
         return [0 if card is not None else None for card in cards]
     else:

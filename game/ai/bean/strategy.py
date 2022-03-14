@@ -13,22 +13,24 @@ from ...deck import DECKS
 from ...base_strategy import BaseStrategy
 from .clues_manager import CluesManager
 import random
+from collections import deque
 
 
 
 
-class Knowledge:
+class PublicKnowledge:
     """
-    An instance of this class represents 
-    - What a player knows about a card, as known by everyone in self.color and self.number
+    An instance of this class represents what a player knows about a card
     """
     
     def __init__(self, color=None, number=None):
         self.color: str = color                  # know exact color, CARD.COLOR enum
         self.number: int = number                # know exact number, int
+        self.playable: bool = False               # at some point, this card was playable
+        self.play_queue: deque = deque()         # Order in which player will play their playable cards
         self.implicit_colors = []
         self.implicit_numbers = []
-        self.playable: bool = False               # at some point, this card was playable
+
         self.non_playable: bool = False           # at some point, this card was not playable
         self.useless: bool = False                # this card is useless    
     
@@ -99,15 +101,15 @@ class Strategy(BaseStrategy):
         # for each of my card, store its possibilities using both implicit and explicit information
         self.possibilities = [Counter(self.full_deck) for i in range(self.k)]
         
-        # remove cards of other players from possibilities
-        self.update_possibilities()
-        
         # knowledge of all players
-        self.knowledge = [[Knowledge(color=False, number=False) for j in range(k)] for i in range(num_players)]
+        self.knowledge = [[PublicKnowledge(color=False, number=False) for j in range(k)] for i in range(num_players)]
         
         self.clues_manager = CluesManager(self)   
 
         self.game = game 
+
+        # remove cards of other players from possibilities
+        self.update_possibilities()
     
 
     def visible_cards(self):
@@ -138,6 +140,12 @@ class Strategy(BaseStrategy):
                         del p[card]
         
         # TODO: why does this not work?
+        # print("my hand: ", self.my_hand)
+        # print("my knowledge: ", self.knowledge[self.id])
+        # print("other hands: ", self.hands)
+        # for (card_pos, p) in enumerate(self.possibilities):
+        #     if not(sum(p.values()) > 0 or self.my_hand[card_pos] is None):
+        #         print("violation: ", card_pos)
         # assert all(sum(p.values()) > 0 or self.my_hand[card_pos] is None for (card_pos, p) in enumerate(self.possibilities))    # check to have at least one possible card!
     
     
@@ -230,7 +238,7 @@ class Strategy(BaseStrategy):
 
     def update_knowledge(self, player_id, card_pos, new_card_exists):
         self.knowledge[player_id].pop(card_pos)
-        self.knowledge[player_id].insert(0, Knowledge(None, None))
+        self.knowledge[player_id].insert(0, PublicKnowledge(None, None))
     
     
     def print_knowledge(self):
@@ -303,19 +311,38 @@ class Strategy(BaseStrategy):
             kn.implicit_numbers.extend(inferred_colors)
             kn.playable = True
         
-
         
+    def get_best_play(self):
+        # If have something playable in hand, play it. 
+        my_hand_kn = self.knowledge[self.id]
+    
+        for (card_pos, kn) in enumerate(my_hand_kn):
+            if kn.playable:
+                return PlayAction(card_pos)
+        return None
+
 
     def get_best_discard(self):
         """
         Choose the best card to be discarded.
         """
-        return NotImplementedError
+        for card_pos, kn in enumerate(self.knowledge[self.id]):
+            if kn.knows_exactly():
+                card = CardAppearance(kn.color, kn.number)
+                if not card.useful(self.board, self.full_deck, self.discard_pile):
+                    return DiscardAction(card_pos)
+
+        # Otherwise, discard chop
+        chop_idx = self.chop_index(self.id)
+        if chop_idx:
+            # Discard chop card
+            return DiscardAction(chop_idx)
+        return DiscardAction(0)
     
     
-    def get_play_clues(self):
+    def get_best_play_clue(self):
         """
-        Choose the best play clue to give. TODO: Currently random choice.
+        Choose the best play clue to give. TODO: Currently just first one found
         """
         play_clues = []
         for target_id in self.other_players_id():
@@ -332,13 +359,32 @@ class Strategy(BaseStrategy):
                         number_clue.apply(self.game)
                         number_clue.former_chop = chop_idx
 
-                        if self.check_focus_match(color_clue, card_pos) and not kn.knows(ClueAction.COLOR) and self.is_good_touch(color_clue):
+                        if self.check_focus_match(color_clue, card_pos) and not kn.knows(ClueAction.COLOR) and self.is_good_touch(color_clue) and not kn.playable:
                             play_clues.append(color_clue)
-                        elif self.check_focus_match(number_clue, card_pos) and not kn.knows(ClueAction.NUMBER) and self.is_good_touch(number_clue):
+                        elif self.check_focus_match(number_clue, card_pos) and not kn.knows(ClueAction.NUMBER) and self.is_good_touch(number_clue) and not kn.playable:
                             play_clues.append(number_clue)
                 
-            
-        return play_clues
+        if len(play_clues) > 0:
+            return random.choice(play_clues)
+        else:
+            return None
+
+
+    def get_best_save_clue(self):
+        target_id = self.next_player_id()
+        while target_id != self.id:
+            for card_pos in range(self.k):
+                card = self.hands[target_id][card_pos]
+                chop_idx = self.chop_index(target_id)
+                if card and card_pos == chop_idx and card.critical(self.board, self.full_deck, self.discard_pile):
+                    if card.number == 5 or card.number == 2:
+                        clue_action = ClueAction(target_id, number=card.number)
+                        clue_action.apply(self.game)
+                        clue_action.former_chop = chop_idx
+                        return clue_action
+
+            target_id = (target_id + 1) % self.num_players
+        return None
 
 
     def get_best_play_last_round(self):
@@ -361,18 +407,21 @@ class Strategy(BaseStrategy):
         Checks hands of all other players to see if a clue_action's card target has already been touched.
         If so, returns True.
         """
-        # Check within hand
-        # if self.for card_pos in clue_action.card_pos
+        # Check within clue
+        target_cards = [self.hands[clue_action.target_id][card_pos] for card_pos in clue_action.cards_pos]
+        if len(set(target_cards)) < len(target_cards):
+            return False
 
         # Check other hands
+        focus_idx = self.focus_index(clue_action)
         for card_pos in clue_action.cards_pos:
             card = self.hands[clue_action.target_id][card_pos]
-            for player_id in range(self.num_players):
-                if player_id != clue_action.target_id and player_id != self.id:
-                    for card_pos, kn in enumerate(self.knowledge[player_id]):
-                        other_card = self.hands[player_id][card_pos]
-                        if card and other_card and card.equals(other_card) and (kn.knows(ClueAction.COLOR) or kn.knows(ClueAction.NUMBER)):
-                            return False
+            for player_id in self.other_players_id():
+                for card_pos, kn in enumerate(self.knowledge[player_id]):
+                    other_card = self.hands[player_id][card_pos]
+                    if card and other_card and card_pos != focus_idx and card.equals(other_card) and (kn.knows(ClueAction.COLOR) or kn.knows(ClueAction.NUMBER)):
+                        return False
+                    
         return True
 
 
@@ -383,46 +432,24 @@ class Strategy(BaseStrategy):
 
         # If you see a critical card on someone's chop_index, save clue it. Clue the earliest person in play order
         if self.game.clues > 0:
-            target_id = self.next_player_id()
-            while target_id != self.id:
-                for card_pos in range(self.k):
-                    card = self.hands[target_id][card_pos]
-                    chop_idx = self.chop_index(target_id)
-                    if card and card_pos == chop_idx and card.critical(self.board, self.full_deck, self.discard_pile):
-                        if card.number == 5 or card.number == 2:
-                            clue_action = ClueAction(target_id, number=card.number)
-                            clue_action.apply(self.game)
-                            clue_action.former_chop = chop_idx
-                            return clue_action
-                target_id = (target_id + 1) % self.num_players
+            best_save_clue = self.get_best_save_clue()
+            if best_save_clue:
+                return best_save_clue
 
-        # If have something playable in hand, play it. 
-        my_hand_kn = self.knowledge[self.id]
-    
-        for (card_pos, kn) in enumerate(my_hand_kn):
-            if kn.playable:
-                return PlayAction(card_pos)
-                
+        # Otherwise, try to play a playable card
+        best_play = self.get_best_play()
+        if best_play:
+            return best_play
 
         # Otherwise, try to give a play clue if there are clues left.
         if self.game.clues > 0:
-            play_clues = self.get_play_clues()
-            if len(play_clues) > 0:
-                return random.choice(play_clues)
+            best_play_clue = self.get_best_play_clue()
+            if best_play_clue:
+                return best_play_clue
 
-        # Otherwise, discard a useless card that you know exactly
-        for card_pos, kn in enumerate(self.knowledge[self.id]):
-            if kn.knows_exactly():
-                card = CardAppearance(kn.color, kn.number)
-                if not card.useful(self.board, self.full_deck, self.discard_pile):
-                    return DiscardAction(card_pos)
-
-        # Otherwise, discard chop
-        chop_idx = self.chop_index(self.id)
-        if chop_idx:
-            # Discard chop card
-            return DiscardAction(chop_idx)
-        return DiscardAction(0)
+        # Otherwise, just discard
+        best_discard = self.get_best_discard()
+        return best_discard
        
 
 
