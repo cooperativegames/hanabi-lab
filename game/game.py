@@ -226,7 +226,7 @@ class Game:
         
         print("Hands:")
         for player in self.players:
-            print("    Player %d" % player.id, player.hand)
+            print("    Player %d" % player.id, player.hand, player.strategy.knowledge[player.id])
         print("Board:", end=' ')
         for color in Card.COLORS:
             print(colored("%d" % self.board[color], Card.PRINTABLE_COLORS[color]), end=' ')

@@ -59,6 +59,7 @@ class ClueAction(Action):
         """
         self.type = self.CLUE
         self.target_id = target_id
+        self.former_chop = None
         
         if color is not None or number is not None:
             assert color is not None and number is None or color is None and number is not None

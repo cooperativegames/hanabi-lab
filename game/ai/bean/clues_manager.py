@@ -97,13 +97,6 @@ class CluesManager(object):
     
     def get_clue(self):
         """
-        Choose the best clue to give, if any.
-        """
-        return NotImplementedError
-    
-    
-    def get_clue(self):
-        """
         Compute clue to give.
         """
         raise NotImplementedError
