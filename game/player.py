@@ -64,7 +64,8 @@ class Player:
                 my_hand = get_appearance(self.hand, hide=True),
                 hands = {i: get_appearance(player.hand) for (i, player) in self.other_players().items()},
                 discard_pile = get_appearance(self.game.discard_pile),
-                deck_size = len(self.game.deck)
+                deck_size = len(self.game.deck),
+                game = self.game
             )
         self.update_strategy()
     
@@ -80,7 +81,8 @@ class Player:
                 discard_pile = get_appearance(self.game.discard_pile),
                 turn = self.game.get_current_turn(),
                 last_turn = self.game.last_turn,
-                deck_size = len(self.game.deck)
+                deck_size = len(self.game.deck),
+                game = self.game
             )
     
     

@@ -15,7 +15,7 @@ class BaseStrategy(object):
     
     def initialize(self, id: int, num_players: int, k: int, board: dict[str, int], deck_type, 
                          my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
-                         discard_pile: list[Card], deck_size: int) -> None:
+                         discard_pile: list[Card], deck_size: int, game) -> None:
         """
         To be called once before the beginning.
         """
@@ -29,10 +29,11 @@ class BaseStrategy(object):
         self.hands: list[list[CardAppearance]] = hands
         self.discard_pile: list[CardAppearance] = discard_pile
         self.deck_size: int = deck_size
+        self.game = game
     
     
     def update(self, clues: int, lives: int, my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
-                     discard_pile: list[Card], turn: int, last_turn: bool, deck_size: int) -> None:
+                     discard_pile: list[Card], turn: int, last_turn: bool, deck_size: int, game) -> None:
         """
         To be called immediately after every turn.
         """
@@ -45,6 +46,7 @@ class BaseStrategy(object):
         self.my_hand: list[CardAppearance] = my_hand  # says in which positions there is actually a card
         self.hands: list[list[CardAppearance]] = hands
         self.discard_pile: list[CardAppearance] = discard_pile
+        self.game = game
     
     
     def feed_turn(self, player_id: int, action: Action) -> None:

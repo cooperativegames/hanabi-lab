@@ -59,36 +59,31 @@ class CluesManager(object):
         return True
     
     
-    def receive_clue(self, player_id, action):
+    def receive_clue(self, player_id: int, clue_action: ClueAction):
         """
-        Receive clue given by player_id and 
+        Process clue given by player_id
         - Update Knowledge and self.possiblities based on direct clue.
-        - Identify what type(s) of clues it is (play or save).
+        - Identify what type(s) of clues it is (play or save) based on convention.
             - For every type that it is identified to be, 
             - 	Update self.possibilities using convention based information
         """
-        if action.player_id == self.id:
+        # Clue is for me
+        if clue_action.target_id == self.id:
             # process direct clue
             for (i, p) in enumerate(self.possibilities):
                 for card in self.strategy.full_deck_composition:
-                    if not card.matches_clue(action, i) and card in p:
-                        # self.log("removing card %r from position %d due to clue" % (card, i))
-                        # p.remove(card)
+                    if not card.matches_clue(clue_action, i) and card in p:
                         del p[card]
         
-        # update knowledge
-        for card_pos in action.cards_pos:
-            kn = self.knowledge[action.player_id][card_pos]
-            if action.clue_type == Action.COLOR:
-                kn.color = True
+        # update explicit knowledge
+        for card_pos in clue_action.cards_pos:
+            kn = self.knowledge[clue_action.target_id][card_pos]
+            if clue_action.clue_type == Action.COLOR:
+                kn.color = clue_action.color
             else:
-                kn.number = True
+                kn.number = clue_action.number
         
-        assert self.possibilities is self.strategy.possibilities
-        assert self.board is self.strategy.board
-        assert self.knowledge is self.strategy.knowledge
-
-
+    
     def choose_all_cards_positions(self, target_id, clue_type):
         """
         Choose all card positions that receive clues (of the given type) from the given player in the given turn.

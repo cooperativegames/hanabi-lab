@@ -7,7 +7,7 @@ if __name__ == "__main__":
     ai = "dummy"
     ai_params = {}
     wait_key = True
-    num_players = 5
+    num_players = 4
     log = True
     strategy_log = False
     dump_deck_to = "deck.txt"

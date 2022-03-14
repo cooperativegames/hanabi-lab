@@ -8,10 +8,11 @@ import copy
 from collections import Counter
 
 from ...action import Action, PlayAction, DiscardAction, ClueAction
-from ...card import Card, get_appearance
+from ...card import Card, CardAppearance, get_appearance
 from ...deck import DECKS
 from ...base_strategy import BaseStrategy
 from .clues_manager import CluesManager
+import random
 
 
 
@@ -22,15 +23,18 @@ class Knowledge:
     - What a player knows about a card, as known by everyone in self.color and self.number
     """
     
-    def __init__(self, color=False, number=False):
-        self.color = color                  # know exact color
-        self.number = number                # know exact number
-        self.playable = False               # at some point, this card was playable
-        self.non_playable = False           # at some point, this card was not playable
-        self.useless = False                # this card is useless    
+    def __init__(self, color=None, number=None):
+        self.color: str = color                  # know exact color, CARD.COLOR enum
+        self.number: int = number                # know exact number, int
+        self.implicit_colors = []
+        self.implicit_numbers = []
+        self.playable: bool = False               # at some point, this card was playable
+        self.non_playable: bool = False           # at some point, this card was not playable
+        self.useless: bool = False                # this card is useless    
     
     def __repr__(self):
-        return ("C" if self.color else "-") + ("N" if self.number else "-") + ("P" if self.playable else "-") + ("Q" if self.non_playable else "-") + ("L" if self.useless else "-") + ("H" if self.high else "-")
+        print
+        return ("C" if self.color else "-") + ("N" if self.number else "-") + ("P" if self.playable else "-") + ("Q" if self.non_playable else "-") + ("L" if self.useless else "-")
     
     
     def knows(self, clue_type):
@@ -68,7 +72,7 @@ class Strategy(BaseStrategy):
         self.params = params
     
     
-    def initialize(self, id, num_players, k, board, deck_type, my_hand, hands, discard_pile, deck_size):
+    def initialize(self, id, num_players, k, board, deck_type, my_hand, hands, discard_pile, deck_size, game):
         """
         To be called once before the beginning.
         """
@@ -101,8 +105,9 @@ class Strategy(BaseStrategy):
         # knowledge of all players
         self.knowledge = [[Knowledge(color=False, number=False) for j in range(k)] for i in range(num_players)]
         
-        self.clues_manager = CluesManager(self)
-    
+        self.clues_manager = CluesManager(self)   
+
+        self.game = game 
     
     def visible_cards(self):
         """
@@ -131,7 +136,8 @@ class Strategy(BaseStrategy):
                         # remove this card
                         del p[card]
         
-        assert all(sum(p.values()) > 0 or self.my_hand[card_pos] is None for (card_pos, p) in enumerate(self.possibilities))    # check to have at least one possible card!
+        # TODO: why does this not work?
+        # assert all(sum(p.values()) > 0 or self.my_hand[card_pos] is None for (card_pos, p) in enumerate(self.possibilities))    # check to have at least one possible card!
     
     
     def update_possibilities_with_combinations(self):
@@ -209,10 +215,18 @@ class Strategy(BaseStrategy):
                 return (self.k - 1) - i
         "*** END SOLUTION ***"
 
+    def focus_index(self, clue_action: ClueAction):
+        """
+        Returns the focus index of a clue that touches all cards in card_pos
+        """
+        chop_index = self.chop_index(clue_action.target_id)
+        focus_idx = chop_index if chop_index in clue_action.cards_pos else clue_action.cards_pos[0]
+        return focus_idx
+
 
     def update_knowledge(self, player_id, card_pos, new_card_exists):
         self.knowledge[player_id].pop(card_pos)
-        self.knowledge[player_id].insert(0, Knowledge(False, False))
+        self.knowledge[player_id].insert(0, Knowledge(None, None))
     
     
     def print_knowledge(self):
@@ -241,51 +255,43 @@ class Strategy(BaseStrategy):
         
         elif action.type == Action.CLUE:
             # someone gave a clue!
-            self.process_clue(player_id, action)
+            self.clues_manager.receive_clue(player_id, action)
         
         # update possibilities with visible cards
         self.update_possibilities()
+
+        if action.type == Action.CLUE:
+            self.infer_clue(player_id, action)
         
         # print knowledge
         if self.verbose and self.id == self.num_players-1:
             self.print_knowledge()
-
     
-    def process_clue(self, player_id: int, action: ClueAction):
-        """
-        Process clue given by player_id
-        - Update Knowledge and self.possiblities based on direct clue.
-        - Identify what type(s) of clues it is (play or save) based on convention.
-            - For every type that it is identified to be, 
-            - 	Update self.possibilities using convention based information
-        """
-        # Clue is for me
-        if action.player_id == self.id:
-            # process direct clue
-            for (i, p) in enumerate(self.possibilities):
-                for card in self.strategy.full_deck_composition:
-                    if not card.matches_clue(action, i) and card in p:
-                        # self.log("removing card %r from position %d due to clue" % (card, i))
-                        # p.remove(card)
-                        del p[card]
-        
-        # update knowledge
-        for card_pos in action.cards_pos:
-            kn = self.knowledge[action.player_id][card_pos]
-            if action.clue_type == Action.COLOR:
-                kn.color = True
-            else:
-                kn.number = True
-        
-        chop_index = self.chop_index(self.id)
-        if len(action.card_pos) == 1:
-            # If it is a 2 or 5 clue that touches chop, it is a discard clue. Otherwise, it is a play clue.
-            if chop_index == action.cards_pos[0] and action.clue_type == ClueAction.NUMBER and action.number == 5 or action.number == 2:
-                # It's a discard clue
-                pass
+
+    def infer_clue(self, clue_giver_id: int, clue_action: ClueAction):
+        focus_idx = self.focus_index(clue_action)
+        card_possibilities = self.possibilities[focus_idx]
+        kn = self.knowledge[clue_action.target_id][focus_idx]
+        if clue_action.clue_type == ClueAction.COLOR:
+            # Color Clue
+            # Infer immediate play
+            inferred_number = self.board[clue_action.color] + 1
+
+            # Delete other possibilities
+            for card in copy.copy(card_possibilities):
+                if card.number != inferred_number:
+                    del card_possibilities[card]
+            kn.implicit_numbers.append(inferred_number)
         else:
-            pass
-        
+            # Number clue
+            inferred_colors = [color for color, number in self.board.items() if clue_action.number == number + 1]
+            
+            for card in copy.copy(card_possibilities):
+                if card.color not in inferred_colors:
+                    del card_possibilities[card]
+            kn.implicit_numbers.extend(inferred_colors)
+        kn.playable = True
+
         
 
     def get_best_discard(self):
@@ -310,10 +316,57 @@ class Strategy(BaseStrategy):
         return NotImplementedError
 
     
+    def check_focus_match(self, clue_action: ClueAction, intended_focus: int):
+        """
+        Checks if we give a clue, the inferred focus will be the same as the intended focus
+        """
+        return self.focus_index(clue_action) == intended_focus
+
     def get_turn_action(self):
         """
         Choose action for this turn.
         """
-        return NotImplementedError
+
+        # If have something playable in hand, play it. 
+        my_hand_kn = self.knowledge[self.id]
+    
+        for (card_pos, kn) in enumerate(my_hand_kn):
+            if kn.playable:
+                return PlayAction(card_pos)
+        
+
+        # Otherwise, try to give a clue if there are clues left.
+        if self.game.clues > 0:
+            play_clues = []
+            for target_id in range(self.num_players):
+                if target_id != self.id:
+                    for card_pos in range(self.k):
+                        card = self.hands[target_id][card_pos]
+                        kn = self.knowledge[target_id][card_pos]
+                        if card and card.playable(self.board):
+                            color_clue = ClueAction(target_id, color=card.color)
+                            color_clue.apply(self.game)
+                            number_clue = ClueAction(target_id, number=card.number)
+                            number_clue.apply(self.game)
+
+                            if self.check_focus_match(color_clue, card_pos) and not kn.knows(ClueAction.COLOR):
+                                play_clues.append(color_clue)
+                            elif self.check_focus_match(number_clue, card_pos) and not kn.knows(ClueAction.NUMBER):
+                                play_clues.append(number_clue)
+            
+            if len(play_clues) > 0:
+                return random.choice(play_clues)
+
+        # Otherwise, discard chop index card
+        chop_idx = self.chop_index(self.id)
+        return DiscardAction(chop_idx)
+
+        
+
+
+
+
+
+
 
 

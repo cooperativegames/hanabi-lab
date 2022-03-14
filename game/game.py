@@ -166,6 +166,8 @@ class Game:
             self.discard_pile.append(card)
             player.hand.pop(action.card_pos)
             player.hand.insert(0, self.draw_card_from_deck(player))
+
+            
         
         elif action.type == Action.DISCARD:
             card = player.hand[action.card_pos]
@@ -178,6 +180,7 @@ class Game:
             self.discard_pile.append(card)
             player.hand.pop(action.card_pos)
             player.hand.insert(0, self.draw_card_from_deck(player))
+
         
         elif action.type == Action.CLUE:
             # decrement clues
@@ -203,11 +206,11 @@ class Game:
         print("Turn %d (player %d):" % (turn.number, player.id), end=' ')
         if action.type in [Action.PLAY, Action.DISCARD]:
             print(action.type, self.discard_pile[-1], "(card %d)," % action.card_pos, end=' ')
-            print("draw %r" % player.hand[action.card_pos])
+            print("draw %r" % player.hand[0])
         
         elif action.type == Action.CLUE:
             print(action.type, end=' ')
-            print("to player %d," % action.player_id, end=' ')
+            print("to player %d," % action.target_id, end=' ')
             print("cards", action.cards_pos, end=' ')
             print("are", end=' ')
             print(action.value)
