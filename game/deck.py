@@ -2,9 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from .card import Card
+from typing import List
 
 
-def standard_deck() -> list[Card]:
+def standard_deck() -> List[Card]:
     deck = []
     id = 0
     for color in Card.COLORS:
@@ -27,7 +28,7 @@ def standard_deck() -> list[Card]:
     return deck
 
 
-def standard_deck_25() -> list[Card]:
+def standard_deck_25() -> List[Card]:
     return standard_deck()
 
 

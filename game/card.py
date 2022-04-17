@@ -4,6 +4,7 @@
 import sys
 from collections import Counter
 from functools import total_ordering
+from typing import Dict, List
 
 from .action import Action
 
@@ -105,14 +106,14 @@ class CardAppearance:
     The following methods are only used by AIs, not by Game.
     """
     
-    def playable(self, board: dict[str, int]):
+    def playable(self, board: Dict[str, int]):
         """
         Is this card playable on the board?
         """
         return self.number == board[self.color] + 1
     
     
-    def useful(self, board: dict[str, int], full_deck, discard_pile):
+    def useful(self, board: Dict[str, int], full_deck, discard_pile):
         """
         Is this card still useful?
         full_deck and discard_pile can be given either as lists or as Counters (more efficient).
@@ -187,7 +188,7 @@ class Card(CardAppearance):
 
 
 
-def get_appearance(cards: list[Card], hide: bool = False) -> list[CardAppearance]:
+def get_appearance(cards: List[Card], hide: bool = False) -> List[CardAppearance]:
     """
     Given a list of (possibly None) Card objects, return the list of CardAppearance objects.
     If hide=True, then hide the card and put 0 instead (this is used by Player to hide cards).

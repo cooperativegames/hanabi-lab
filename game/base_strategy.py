@@ -3,6 +3,8 @@
 
 from .card import Card, CardAppearance
 from .action import Action
+from typing import List, Dict
+
 
 class BaseStrategy(object):
     """
@@ -13,27 +15,27 @@ class BaseStrategy(object):
         self.verbose = verbose
     
     
-    def initialize(self, id: int, num_players: int, k: int, board: dict[str, int], deck_type, 
-                         my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
-                         discard_pile: list[Card], deck_size: int, game) -> None:
+    def initialize(self, id: int, num_players: int, k: int, board: Dict[str, int], deck_type, 
+                         my_hand: List[CardAppearance], hands: List[List[CardAppearance]], 
+                         discard_pile: List[Card], deck_size: int, game) -> None:
         """
         To be called once before the beginning.
         """
         self.id: int = id
         self.num_players: int = num_players
         self.k: int = k  # number of cards per hand
-        self.board: dict[str, int] = board # board state, a dict of color to int
+        self.board: Dict[str, int] = board # board state, a dict of color to int
         self.deck_type = deck_type
         
-        self.my_hand: list[CardAppearance] = my_hand 
-        self.hands: list[list[CardAppearance]] = hands
-        self.discard_pile: list[CardAppearance] = discard_pile
+        self.my_hand: List[CardAppearance] = my_hand 
+        self.hands: List[List[CardAppearance]] = hands
+        self.discard_pile: List[CardAppearance] = discard_pile
         self.deck_size: int = deck_size
         self.game = game
     
     
-    def update(self, clues: int, lives: int, my_hand: list[CardAppearance], hands: list[list[CardAppearance]], 
-                     discard_pile: list[Card], turn: int, last_turn: bool, deck_size: int, game) -> None:
+    def update(self, clues: int, lives: int, my_hand: List[CardAppearance], hands: List[List[CardAppearance]], 
+                     discard_pile: List[Card], turn: int, last_turn: bool, deck_size: int, game) -> None:
         """
         To be called immediately after every turn.
         """
@@ -43,9 +45,9 @@ class BaseStrategy(object):
         self.last_turn: bool = last_turn
         self.deck_size: int = deck_size
         
-        self.my_hand: list[CardAppearance] = my_hand  # says in which positions there is actually a card
-        self.hands: list[list[CardAppearance]] = hands
-        self.discard_pile: list[CardAppearance] = discard_pile
+        self.my_hand: List[CardAppearance] = my_hand  # says in which positions there is actually a card
+        self.hands: List[List[CardAppearance]] = hands
+        self.discard_pile: List[CardAppearance] = discard_pile
         self.game = game
     
     

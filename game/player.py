@@ -5,6 +5,7 @@ import sys
 
 from .card import Card, get_appearance
 from .action import Action
+from typing import Dict, List
 
 import importlib
 
@@ -15,7 +16,7 @@ class Player:
     In particular, it has to take care of hiding information not known to the player.
     """
     
-    def __init__(self, id: int, game: 'Game', hand: list[Card], ai: str, ai_params: dict, strategy_log: bool = False):
+    def __init__(self, id: int, game: 'Game', hand: List[Card], ai: str, ai_params: Dict, strategy_log: bool = False):
         # my id (order of play)
         self.id: int = id
         
@@ -23,11 +24,11 @@ class Player:
         self.game: 'Game' = game
         
         # initial hand of cards
-        self.hand: list[Card] = hand
+        self.hand: List[Card] = hand
         
         # AI to be used, with parsameters
         self.ai: str = ai
-        self.ai_params: dict = ai_params
+        self.ai_params: Dict = ai_params
         
         # create strategy object
         Strategy = __import__('ai.%s.strategy' % self.ai, globals(), locals(), fromlist=['Strategy'], level=1).Strategy
